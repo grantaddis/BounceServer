@@ -1,0 +1,25 @@
+<?php
+$server = "localhost";
+$username = "bounce";
+$password = "wesbounce";
+$database = "bounce";
+
+$connection = mysql_connect($server, $username, $password) or die
+    ("Could not connect : " + mysql_error());
+
+mysql_select_db($database, $connection);
+
+$party = $_GET["party"];
+
+$sql = "SELECT * FROM parties WHERE location='" . $_GET["party"] . "';";
+$result = mysql_query($sql, $connection) or die (mysql_error());
+$pid = mysql_fetch_assoc($result);
+$pid = $pid["pid"];
+
+$sql = "SELECT fid FROM users WHERE pid='" . $pid . ";";
+$result = mysql_query($sql, $connection) or die (mysql_error());
+
+echo json_encode(mysql_fetch_assoc($result));
+
+mysql_close($connection);
+?>

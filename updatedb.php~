@@ -1,0 +1,25 @@
+<?php
+$server = "localhost";
+$username = "bounce";
+$password = "wesbounce";
+$database = "bounce";
+
+$connection = mysql_connect($server, $username, $password) or die
+    ("Could not connect: " . mysql_error());
+
+mysql_select_db($database, $connection);
+
+$address = mysql_real_escape_string($_POST["address"]);
+$userid = $_POST["userid"];
+
+$sql = "INSERT INTO locations (id, location) ";
+$sql .= "VALUES ($userid, $address) ";
+$sqp .= "ON DUPLICATE KEY UPDATE location=$address;";
+
+if (!mysql_query($sql, $connection)) {
+    die('Error: ' . mysql_error());
+} else {
+    echo "Location updated!";
+}
+
+mysql_close($connection);

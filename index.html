@@ -1,0 +1,145 @@
+<!DOCTYPE html>
+<html>
+<head>
+<title>Bounce</title>
+<script src="http://ajax.googleapis.com/ajax/libs/jquery/1.11.1/jquery.min.js"></script>
+<meta charset="UTF-8">
+</head>
+<body>
+<script>
+  var id, friends, parties;
+
+  function statusChangeCallback(response) {
+    if (response.status === 'connected') {
+      FB.api('/me', function(response) {
+        window.id = response["id"];
+        document.getElementById('status').innerHTML = 
+          'Thanks for logging in, ' + response.name + '!';
+      });
+      FB.api('/me/friends', function (response) {
+        if (response && !response.error) {
+          window.friends = response;
+        }
+      });
+    } else if (response.status === 'not_authorized') {
+      document.getElementById('status').innerHTML = 'Please log ' +
+        'into this app.';
+    } else {
+      document.getElementById('status').innerHTML = 'Please log ' +
+        'into Facebook.';
+    }
+  }
+
+  function checkLoginState() {
+    FB.getLoginStatus(function(response) {
+      statusChangeCallback(response);
+    });
+  }
+
+  window.fbAsyncInit = function() {
+  FB.init({
+    appId      : '960379903977296',
+    cookie     : true,
+    xfbml      : true,
+    version    : 'v2.1'
+  });
+
+  FB.getLoginStatus(function(response) {
+    statusChangeCallback(response);
+  });
+
+  };
+
+  (function(d, s, id) {
+    var js, fjs = d.getElementsByTagName(s)[0];
+    if (d.getElementById(id)) return;
+    js = d.createElement(s); js.id = id;
+    js.src = "//connect.facebook.net/en_US/sdk.js";
+    fjs.parentNode.insertBefore(js, fjs);
+  }(document, 'script', 'facebook-jssdk'));
+
+  function checkin() {
+
+      var location = document.getElementById("location").value;
+
+      var xmlhttp = new XMLHttpRequest();
+      var url = "http://bounce.grantadd.is/checkin.php";
+      var params = "location=" + location + "&userid=" + window.id;
+      xmlhttp.open("POST", url, true);
+      xmlhttp.setRequestHeader('Content-type', 'application/x-www-form-urlencoded');
+
+      xmlhttp.send(params);
+}
+
+  function checkParties() {
+
+    var url = "http://bounce.grantadd.is/checkparties.php?userid=";
+    url += window.id + "&friendCount=" + window.friends.data.length;
+
+    FB.api('/me/friends', function (response) {
+      if (response && !response.error) {
+        window.friends = response;
+      }
+    });
+
+    for (var i = 0; i < window.friends.data.length; i++) {
+			url += "&fid"+i+"=" ;
+			url += window.friends.data[i].id;
+    }
+
+    var xmlhttp = new XMLHttpRequest();
+
+    xmlhttp.open("GET", url, false);
+    xmlhttp.send(null);
+
+    if (xmlhttp.status === 200) {
+      window.parties = eval(xmlhttp.response);
+      return window.parties.sort(function(a, b) {
+		return (a[1] + a[2]) < (b[1] + b[2]);
+      });
+    }
+}
+    
+function checkGuests(pid) {
+    var xmlhttp = new XMLHttpRequest();
+    var url = "http://bounce.grantadd.is/checkguests.php?pid=" + pid;
+
+    xmlhttp.open("GET", url, false);
+    xmlhttp.send(null);
+    var friendsAtParty = new Array();
+
+    if (xmlhttp.status === 200) {
+      var friendIDs = eval(xmlhttp.response);
+      for (var i = 0; i < friendIDs.length; i++) {
+        for (var j = 0; j < window.friends.data.length; j++) {
+          if (friendIDs[i] == window.friends.data[j].id) {
+            friendsAtParty.push(window.friends.data[j].name);
+          }
+        }
+      }
+    }
+
+    return friendsAtParty;
+}  
+</script>
+<!--
+  Below we include the Login Button social plugin. This button uses
+  the JavaScript SDK to present a graphical Login button that triggers
+  the FB.login() function when clicked.
+-->
+
+<fb:login-button scope="user_friends" onlogin="checkLoginState();">
+</fb:login-button>
+
+<div id="status">
+</div>
+
+<input id="location"></input><br>
+<button id="submit" onclick="checkin()">Check In</button><br>
+<button id="where" onclick="checkParties()">Check Parties</button>
+
+<script>
+</script>
+
+</body>
+</html>

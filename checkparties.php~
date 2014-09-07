@@ -1,0 +1,48 @@
+<?php
+$server = "localhost";
+$username = "bounce";
+$password = "wesbounce";
+$database = "bounce";
+
+$connection = mysql_connect($server, $username, $password) or die
+    ("Could not connect: " . mysql_error());
+
+mysql_select_db($database, $connection);
+
+$userid = $_GET["userid"];
+$friendCount = $_GET["friendCount"];
+$keys = array_keys($_GET);
+$parties = [];
+
+for ($i = 0; $i < $friendCount; $i++) {
+    $sql = "SELECT pid FROM users WHERE fid='" .$_GET[$keys[$i+2]] . "';";
+    $result = mysql_query($sql, $connection) or die (mysql_error());
+    $pid = mysql_fetch_assoc($result);
+    $pid = $pid["pid"];
+    $parties[$pid] = array("", 0, $parties[$pid][1] + 1, 0);
+}
+
+$keys = array_keys($parties);
+
+for ($i = 0; $i < count($parties); $i++) {
+    $sql = "SELECT * FROM parties WHERE pid='" . $keys[$i]
+        . "';";
+    $result = mysql_query($sql, $connection) or die (mysql_error());
+    $result = mysql_fetch_assoc($result);
+    $parties[$keys[$i]] =  array($result["location"], 
+    (int) $result["attendees"], $parties[$keys[$i]][2],
+    (int) $keys[$i]);
+}
+
+$return_parties = [];
+
+for ($i = 0; $i < count($parties); $i++) {
+    array_push($return_parties, $parties[$keys[$i]]);
+}
+
+echo json_encode($return_parties);
+
+header('Content-Type: application/json');
+
+mysql_close($connection);
+?>
